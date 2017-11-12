@@ -44,8 +44,8 @@ public class Regex implements Matcher {
           builder.addWildcardTransition();
           break;
         case '\\':
-          // Fall through is intentional here.
           c = pattern[++index];
+          // Fall through is intentional here.
         default:
           // c is a character literal. Create a new state and add an edge to the old state's
           // transition function.
