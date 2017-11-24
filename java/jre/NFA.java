@@ -1,73 +1,74 @@
 package jre;
 
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.stream.Collectors;
 
-/**
- * A finite graph with edges labeled by characters of a finite alphabet or a special meta-character
- * that matches any character.
- */
-public class NFA implements Matcher {
+class NFA {
 
-  int startState;
-  final Map<Integer, Function<Character, Set<Integer>>> stateTransitions;
-  final Map<Integer, Set<Integer>> stateEquivalences;
-  final Set<Integer> successStates;
+  private final State startState;
+  private final State successState;
+  final Map<State, Map<Transition, Set<State>>> transitionsTable;
 
-  public NFA(
-      int startState,
-      Map<Integer, Function<Character, Set<Integer>>> stateTransitions,
-      Map<Integer, Set<Integer>> stateEquivalences,
-      Set<Integer> successStates) {
+  NFA(
+      State startState,
+      State successState,
+      Map<State, Map<Transition, Set<State>>> transitionsTable) {
     this.startState = startState;
-    this.stateTransitions = stateTransitions;
-    this.stateEquivalences = stateEquivalences;
-    this.successStates = successStates;
+    this.successState = successState;
+    this.transitionsTable = transitionsTable;
   }
 
-  @Override
-  public boolean matches(String input) {
-    return !Collections.disjoint(successStates, evaluate(input));
-  }
-
-  /**
-   * Computes all possible end states for the input string.
-   *
-   * <p>This runs exponential in input size.
-   */
-  private Set<Integer> evaluate(String input) {
-    Set<Integer> currentStates = new HashSet<>();
+  boolean evaluate(String input) {
+    Set<State> currentStates = new HashSet<>();
     currentStates.add(startState);
-    expandStateEquivalences(currentStates);
+    applyEmptyTransitions(currentStates);
     for (char c : input.toCharArray()) {
-      Set<Integer> nextStates = new HashSet<>();
-      for (int currentState : currentStates) {
-        Function<Character, Set<Integer>> transition =
-            stateTransitions.getOrDefault(currentState, x -> new HashSet<>());
-        Set<Integer> transitionStates = transition.apply(c);
-        expandStateEquivalences(transitionStates);
-        nextStates.addAll(transitionStates);
+      Set<State> nextStates = new HashSet<>();
+      for (State currentState : currentStates) {
+        Map<Transition, Set<State>> transition =
+            transitionsTable.getOrDefault(currentState, new HashMap<>());
+        Set<State> newStates =
+            transition
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getKey() instanceof Transition.CharacterTransition)
+                .filter(entry -> entry.getKey().accepts(c))
+                .map(Map.Entry::getValue)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet());
+        applyEmptyTransitions(newStates);
+        nextStates.addAll(newStates);
       }
       currentStates = nextStates;
     }
-    return currentStates;
+    return currentStates.contains(successState);
   }
 
-  private void expandStateEquivalences(Set<Integer> states) {
+  private void applyEmptyTransitions(Set<State> currentStates) {
     int numStates;
     do {
-      numStates = states.size();
-      expandStateEquivalencesOneLevel(states);
-    } while (states.size() > numStates);
+      numStates = currentStates.size();
+      applyEmptyTransitionsOneLevel(currentStates);
+    } while (currentStates.size() > numStates);
   }
 
-  private void expandStateEquivalencesOneLevel(Set<Integer> states) {
-    stateEquivalences.entrySet()
-        .stream()
-        .filter(e -> states.contains(e.getKey()))
-        .forEach(e -> states.addAll(e.getValue()));
+  private void applyEmptyTransitionsOneLevel(Set<State> currentStates) {
+    Set<State> newStates = new HashSet<>();
+    for (State currentState : currentStates) {
+      Map<Transition, Set<State>> currentStateTransitions = transitionsTable.get(currentState);
+      if (currentStateTransitions == null) {
+        continue;
+      }
+      Set<State> emptyTransitionStates = currentStateTransitions.get(Transition.EMPTY_TRANSITION);
+      if (emptyTransitionStates == null) {
+        continue;
+      }
+      newStates.addAll(emptyTransitionStates);
+    }
+    currentStates.addAll(newStates);
   }
 }

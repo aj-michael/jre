@@ -3,17 +3,17 @@ package jre;
 import java.util.Map;
 import java.util.Set;
 
-public final class DFA {
-  private final State start;
-  private final Set<State> goals;
+final class DFA {
+  private final Node start;
+  private final Set<Node> goals;
 
-  DFA(State start, Set<State> goals) {
+  DFA(Node start, Set<Node> goals) {
     this.start = start;
     this.goals = goals;
   }
 
   boolean matches(String input) {
-    State current = start;
+    Node current = start;
     for (char c : input.toCharArray()) {
       current = current.transition(c);
     }
@@ -21,14 +21,14 @@ public final class DFA {
   }
 }
 
-final class State {
-  private final Map<Character, State> edges;
+final class Node {
+  private final Map<Character, Node> edges;
 
-  State(Map<Character, State> edges) {
+  Node(Map<Character, Node> edges) {
     this.edges = edges;
   }
 
-  State transition(char c) {
+  Node transition(char c) {
     if (edges.containsKey(c)) {
       return edges.get(c);
     } else {

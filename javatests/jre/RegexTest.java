@@ -33,4 +33,35 @@ public class RegexTest {
     assertFalse(regex.matches("aa"));
     assertFalse(regex.matches("abba"));
   }
+
+  @Test
+  public void testRepeated() {
+    Regex regex = new Regex("ba+");
+    assertTrue(regex.matches("baaa"));
+    assertFalse(regex.matches("b"));
+    assertFalse(regex.matches("bbaa"));
+  }
+
+  @Test
+  public void testOptionalRepeated() {
+    Regex regex = new Regex("ba*");
+    assertTrue(regex.matches("baaa"));
+    assertTrue(regex.matches("b"));
+    assertFalse(regex.matches("bbaa"));
+  }
+
+  @Test
+  public void testOptional() {
+    Regex regex = new Regex("ba?b");
+    assertTrue(regex.matches("bab"));
+    assertTrue(regex.matches("bb"));
+    assertFalse(regex.matches("baab"));
+  }
+
+  @Test
+  public void testComplex() {
+    Regex regex = new Regex("a((b|c)*fd?)+e");
+    assertTrue(regex.matches("abbcffde"));
+    assertFalse(regex.matches("abbcffbde"));
+  }
 }

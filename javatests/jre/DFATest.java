@@ -16,15 +16,15 @@ public class DFATest {
 
   @Test
   public void testMatching() {
-    Map<Character, State> state1Map = new HashMap<>();
-    State state1 = new State(state1Map);
-    Map<Character, State> state2Map = new HashMap<>();
-    State state2 = new State(state2Map);
+    Map<Character, Node> state1Map = new HashMap<>();
+    Node state1 = new Node(state1Map);
+    Map<Character, Node> state2Map = new HashMap<>();
+    Node state2 = new Node(state2Map);
     state1Map.put('a', state1);
     state1Map.put('b', state2);
     state2Map.put('a', state2);
     state2Map.put('b', state1);
-    Set<State> solutionStates = new HashSet<>();
+    Set<Node> solutionStates = new HashSet<>();
     solutionStates.add(state2);
     DFA oddNumberOfB = new DFA(state1, solutionStates);
     assertTrue(oddNumberOfB.matches("aabbabbaba"));
